@@ -1,4 +1,4 @@
-# Regression-Analysis-of-Diamond-Prices
+# Regression Analysis of Diamond Prices
 
 ## An exploratory analysis of diamond prices using linear regression
 
