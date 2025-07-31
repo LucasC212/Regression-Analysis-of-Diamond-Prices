@@ -1,0 +1,466 @@
+---
+title: "Final Project 126"
+author: "Lucas Childs"
+date: "2025-03-17"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Part 1 - Data Description and Descriptive Statistics
+
+Regression is an essential tool used to make quantitative predictions. This project 
+will focus on using it to predict diamond prices given the `Diamonds` dataset from 
+Kaggle. 
+
+First, one must understand the variables and their relationships. 
+
+## 1)
+
+```{r, message=FALSE}
+set.seed(203854)
+library(ggplot2)
+library(gridExtra)
+diamonds <- read.csv("Diamonds_Prices_2022.csv", 
+                     colClasses = c("carat" = "numeric", 
+                                    "cut" = "factor", 
+                                    "color" = "factor",
+                                    "clarity" = "factor",
+                                    "depth" = "numeric",
+                                    "table" = "numeric",
+                                    "price" = "numeric",
+                                    "x" = "numeric",
+                                    "y" = "numeric",
+                                    "z" = "numeric"))
+
+# Random sample of 1000 observations
+n <- 1000
+
+diamonds_sample <- diamonds[sample(nrow(diamonds), size = n), ]
+
+# Remove index variable
+diamonds_sample <- subset(diamonds_sample, select = -c(X))
+
+# Rename real indices
+rownames(diamonds_sample) <- 1:nrow(diamonds_sample)
+```
+
+## 2)
+
+```{r}
+summary(diamonds_sample)
+str(diamonds_sample)
+
+g1 <- ggplot(data = diamonds_sample, mapping = aes(x = carat)) + 
+  geom_histogram(binwidth = 0.15,fill = "chartreuse3", color = "black") + 
+  ggtitle("Diamond Carat Values") + 
+  xlab("Carat") + ylab("Frequency") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10))
+
+g2 <- ggplot(data = diamonds_sample, mapping = aes(x = depth)) + 
+  geom_histogram(binwidth = 0.7, fill = "gold1", color = "black") + 
+  ggtitle("Diamond Depth Values") + 
+  xlab("Depth") + ylab("Frequency") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10))
+
+grid.arrange(g1, g2, ncol = 2)
+```
+
+Based on the carat histogram, most diamonds are about 0.3 carats with very few above 2 carats.
+Diamond depth appears normal, with most depth about 62 (unknown units).
+
+```{r, message=FALSE}
+g3 <- ggplot(data = diamonds_sample, mapping = aes(x = table)) + 
+  geom_histogram(binwidth = 1, fill = "orangered", color = "black") + 
+  ggtitle("Diamond Table Values") + 
+  xlab("Table") + ylab("Frequency") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10))
+
+g4 <- ggplot(data = diamonds_sample, mapping = aes(x = x)) + 
+  geom_histogram(fill = "blue", color = "black") + 
+  ggtitle("Diamond Lengths") + 
+  xlab("Length (mm)") + ylab("Frequency") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10))
+
+grid.arrange(g3, g4, ncol = 2)
+```
+
+Diamond table also appears normal with most values at around 56. Diamond length 
+is most frequent at 4.4 mm with few diamonds deeper than 8.5 mm.
+
+```{r, message=FALSE}
+ggplot(data = diamonds_sample, mapping = aes(x = price)) + 
+  geom_histogram(fill = "darkorchid2", color = "black") + 
+  ggtitle("Diamond Price Values") + 
+  xlab("Price ($)") + ylab("Frequency") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10))
+```
+
+Diamond price is right skewed, with most diamonds priced at approximately $600.
+
+```{r, message=FALSE}
+g5 <- ggplot(data = diamonds_sample, mapping = aes(x = y)) + 
+  geom_histogram(binwidth = 0.3, fill = "orange", color = "black") + 
+  ggtitle("Diamond Widths") + 
+  xlab("Width (mm)") + ylab("Frequency") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10))
+
+g6 <- ggplot(data = diamonds_sample, mapping = aes(x = z)) + 
+  geom_histogram(binwidth = 0.2, fill = "yellow", color = "black") + 
+  ggtitle("Diamond Depths") + 
+  xlab("Depth (mm)") + ylab("Frequency") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10))
+
+grid.arrange(g5, g6, ncol = 2)
+```
+
+Both diamond width and depth in mm are similarly distributed and appear roughly normal. 
+The diamonds are more often wide than they are deep.
+
+```{r}
+diamonds_sample$cut <- factor(diamonds_sample$cut, levels = c("Fair", "Good", "Very Good", "Ideal", "Premium"))
+
+ggplot(data = diamonds_sample, mapping = aes(x = cut, fill = cut)) + 
+  geom_bar() + 
+  xlab("Cut") +
+  ylab("Frequency") +
+  ggtitle("Diamond Cut") +
+  scale_x_discrete() +
+  scale_fill_brewer(palette = "Set1") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10))
+```
+
+Evidently, there are the most diamonds with an Ideal cut where the next most common 
+are Premium and then Very Good cuts.
+
+```{r}
+ggplot(data = diamonds_sample, mapping = aes(x = color, fill = color)) + 
+  geom_bar() + 
+  xlab("Color") +
+  ylab("Frequency") +
+  ggtitle("Diamond Color") +
+  scale_fill_brewer(palette = "Set2") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10))
+```
+
+The most common diamond color is G, followed by E and F in the colorless category.
+
+```{r}
+ggplot(data = diamonds_sample, mapping = aes(x = clarity, fill = clarity)) + 
+  geom_bar() + 
+  xlab("Clarity") +
+  ylab("Frequency") +
+  ggtitle("Diamond Clarity") +
+  scale_fill_brewer(palette = "Spectral") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10))
+
+```
+
+The most common diamond clarity metric is VS2, followed by SI1 and SI2.
+
+## 3)
+
+\textbf{Choose 3 quantitative and 2 categorical variables intuitively:}
+```{r}
+# I chose price, carat, depth, color, clarity
+model1 <- lm(price ~ carat + depth + color + clarity, data = diamonds_sample)
+```
+
+Examine correlation between the variables:
+```{r}
+# Run the correlation matrix on just the quantitative variables (and variables we've chosen)
+cor(diamonds_sample[, -c(2, 3, 4, 6, 8, 9, 10)])
+```
+
+Out of the quantitative variables I chose: `price`, `carat`, and `depth`, only `price` 
+and `carat` are very correlated, `depth` is not very correlated at all to the 
+other variables.
+
+## 4)
+
+\textbf{Multiple Linear regression:}
+```{r}
+summary(model1)
+```
+
+## 5)
+
+Per the summary statistics, the overall model p-value is statistically significant, 
+and most predictors are as well, except for `depth` and "colorE". Adjusted $R^2$ 
+is relatively high and so is residual standard error.
+
+# Part 2 - Simple Linear Regression Comparison
+
+## 1)
+
+\textbf{Simple linear regression model:}
+```{r}
+slr <- lm(price ~ carat, data = diamonds_sample)
+```
+
+## 2)
+
+\textbf{Summary statistics interpretation:}
+```{r}
+summary(slr)
+```
+
+With a p-value of 2.2e-16, we reject the null hypothesis $H_0$ at significance 
+level $\alpha=0.05$ and conclude that we have statistically significant evidence 
+that carat impacts diamond price. The F-statistic is used to calculate this p-value, 
+in which we want a higher F-statistic so that unexplained variance is low. 
+
+Adjusted $R^2$ represents the change in $y$, 
+diamond price, explained by the combination of the independent variables, which is 
+just carat in the simple linear regression model. Since multiple $R^2$ increases 
+as more predictors are added to the model, adjusted $R^2$ accounts for this by 
+dividing SSE and SST by their respective degrees of freedom. But since there is 
+only one predictor, we jut look at normal $R^2$ which is multiple $R^2$, 0.86, a 
+pretty good fit, but it could be better since the best $R^2$ would be 1.
+
+Residual standard error represents the average deviation of the actual data points 
+from the predicted values of the model, where a simple linear regression model was 
+used in this instance. So on average, the model deviates 
+1523 dollars from the actual diamond prices.
+
+Under "Residuals", Min represents the distance between the regression line and the 
+data point farthest below it, 1Q is the first quartile so 25% of residuals lie below 
+this value, Median represents the median so the value that is separating the lower half 
+of the values from the upper half, 3Q is the third quartile so 25% of residuals lie 
+above this value, and Max represents the distance between the regression line and 
+the data point farthest above it. So, the data point furthest underneath the fitted 
+regression line is -6257 dollars away, 25% of the residuals lies below -858, the median 
+is 38.6, 25% of residuals lie above 555, and the distance between the regression line 
+and the data point farthest above it is 8124 dollars.
+
+Under "Coefficients" the intercept estimate, -2339, represents the expected diamond price 
+when not considering carats, 7927 represents the change in diamond price for every 
+1 carat added to the diamond. The standard errors of the estimates represents the 
+measure of the average deviation of the estimated coefficients from its true population 
+value. So the intercept deviates an average of 94 dollars from the true intercept value 
+and the coefficient for carat deviates an average of 102 dollars from the true slope coefficient value. The t-values represent how many standard errors the estimated 
+coefficients are from 0, so the intercept is -25 standard errors away from 0 while 
+the slope term is 78 standard errors away from 0. Finally, the p-value of carat tells 
+us that carat has a statistically significant effect on diamond price, which is the same 
+p-value as the global p-value, since there is only one predictor.
+
+```{r, warning=FALSE}
+confint(slr, level = 0.95)
+predict(slr, interval = "prediction", level = 0.95)[1:5, ]
+```
+
+The 95% confidence interval is interpreted as: out of 100 intervals, 95 of them will 
+contain the true intercept and slope coefficient, between -2522 and -2155 and 
+between 7728 and 8126, respectively.
+
+In the 95% prediction interval, "fit" is the predicted diamond price of each observation that 
+the simple linear regression model outputted. The lower and upper bounds 
+represent the interval that the true price could take. The wide interval is due 
+to the high residual standard error that is present in this model. And, out of 100 
+intervals, 95 of them will contain the true i-th data point.
+
+Examining the plot of residuals vs fitted values gives insight into whether 
+the model is linear or not and maintains homoscedasticity. This will be 
+analysed in the next question, testing the linear regression model assumptions.
+
+## 3)
+
+Linear regression model assumptions: 
+
+\textbf{Linearity:}
+```{r}
+plot(slr, which = 1)
+```
+
+The residuals vs fitted values plot shows a slight pattern away from 0 and the 
+residuals follow a curved, non-linear pattern. To remedy this, let's transform 
+the predictor, carat, with a polynomial.
+
+```{r}
+slr_2 <- lm(price ~ poly(carat, 3), data = diamonds_sample)
+
+plot(slr_2, which = 1)
+```
+
+Now the residuals are randomly scattered around 0 and follow a more linear 
+relationship.
+
+However, variance does not appear constant since the residuals fan out. Let's try 
+using a logarithmic function to transform the response.
+
+\textbf{Homoscedasticity:}
+```{r}
+slr_3 <- lm(log(price) ~ poly(carat, 3), data = diamonds_sample)
+
+plot(slr_3, which = 1)
+```
+
+Now the residuals have constant variance, homoscedasticity, since their vertical 
+spread is more consistent throughout the fitted values.
+
+Normality of the residuals is not a concern because we have a sufficiently large 
+sample size of $n=1000$, so the residuals will approximate to a normal distribution 
+by the central limit theorem.
+
+## 4)
+
+```{r}
+summary(slr_3)
+```
+
+After the required transformations, $R^2$ increased from 0.86 to 0.94 and residual 
+standard error decreased from 1523 dollars to 0.25 dollars. So, the fit of the 
+model is much better now.
+
+## 5)
+
+\textbf{Testing more predictors (assessing adjusted $R^2$):}
+```{r}
+model4 <- lm(log(price) ~ poly(carat, 3) + depth + color + clarity, 
+             data = diamonds_sample)
+```
+
+After adding the predictor `depth` into the transformed model, adjusted $R^2$ increased 
+from 0.9396 to 0.9401. Then, adding `color` to this model increased adjusted $R^2$ to 
+0.952. Furthermore, `clarity` increased adjusted $R^2$ to 0.983.
+
+## 6)
+
+\textbf{Multicollinearity}
+```{r}
+faraway::vif(model4)
+```
+
+Using VIF, it can be seen that some levels of the categorical variable `clarity` 
+have VIF values higher than 10, but VIF measures relationships among variables, not 
+between categorical variable levels, so we'll keep them unchanged. The other 
+variables do not have any multicollinearity present among them.
+
+## 7)
+
+An interesting aspect of the multicollinearity check was in the third degree polynomial 
+transformed `carat` predictor. When an orthogonal polynomial is used instead of a 
+raw polynmoial, there is no multicollinearity among the degrees of the carat polynomial.
+
+# Part 3 - AIC & Predictions
+
+## 1)
+
+\textbf{Variable Selection using stepwise AIC:}
+```{r}
+fullmodel <- lm(log(price) ~ poly(carat, 3) + depth + color + clarity, 
+             data = diamonds_sample)
+nullmodel <- lm(log(price) ~ 1, data = diamonds_sample)
+
+model5 <- step(nullmodel, scope = formula(fullmodel), direction = "both", trace = 0)
+summary(model5)
+```
+
+After running stepwise AIC on the transformed model, AIC chose a model with the 
+third degree polynomial transformed `carat` predictor, `clarity`, and `color`, 
+eliminating `depth` from `model4` that was previously created in Part 2. Adjusted $R^2$ 
+remains at 0.983, but since the individual effect of `depth` was not statistically 
+significant, that predictor is now gone. And, all individual effects are statistically 
+significant, even at the Bonferroni-adjusted significance level ($\alpha_{Bonferroni} = \frac{0.05}{16} = 0.003$).
+
+```{r}
+faraway::vif(model5)
+```
+
+Multicollinearity remains unchanged from `model4`, and once again, it can be seen 
+that some levels of the categorical variable `clarity` have VIF values higher than 
+10, but VIF measures relationships among variables, not between categorical variable 
+levels, so we'll keep them unchanged.
+
+```{r}
+plot(model5, which = 1)
+```
+
+The model assumptions still hold, `model5` is linear and maintains homoscedasticity. 
+
+
+## 2)
+
+```{r}
+# prediction data (observation 17) with all variables model5 used as predictors
+predict_data <- diamonds_sample[17, c(1, 3, 4)]
+
+# mean predicted value confidence interval
+predict(model5, , newdata = predict_data, interval = "confidence", level = 0.95)
+
+# prediction interval
+predict(model5, newdata = predict_data, interval = "prediction", level = 0.95)
+```
+
+Here are the confidence and prediction intervals for a mean predicted value and 
+predicted value using the 17th observation in the dataset. However, these values 
+are logarithmically transformed since the linear regression model used to make 
+these predictions transformed diamond price logarithmically. So, to get the real 
+diamond price predictions and intervals, we can apply an exponential transformation. 
+
+The predicted values would be 755.86 and the mean predicted value's confidence 
+interval would be 732.65 to 779.81. The predicted value's prediction interval 
+would be 579.49 to 985.92.
+
+
+\textbf{Leverage and influential points:}
+```{r}
+plot(model5, which = 5)
+plot(model5, which = 4)
+
+```
+
+Looking at the residuals vs leverage graph, it can be seen that 3 points have high 
+leverage. Observations 955, 273, and 338. Cook's distance confirms this, showing 
+observation 955 with a Cook's distance of about 0.4, observation 273 with a Cook's 
+distance of approximately 0.08, and observation 338 with a Cook's distance of 
+approximately 0.06. Since these values are greater than the threshold for Cook's 
+distance of $\frac{4}{n} = \frac{4}{1000} = 0.004$, then these observations could 
+be removed from the model. However, in this case, we will not remove them, just make 
+note of their influence.
+
+## 3)
+
+This report sought to fit a linear regression model for diamond price, choosing the 
+most relevant predictors out of 4 chosen to do this, `carat`, `color`, `clarity`, and 
+`depth`. The data was taken from the "Diamonds Prices" dataset on Kaggle, randomly 
+sampling 1000 observations. Exploratory data analysis was ran on this subsetted dataset 
+and the linear regression `summary` function output was interpreted. Additionally, 
+diagnostics were run to check if model assumptions were upheld, in which a simple 
+linear regression model was transformed for linearity and homoscedasticity with a 3rd 
+degree polynomial on the predictor `carat`, and a logarithmic function on the response. 
+Then, predictors were added one at a time to the transformed simple linear regression 
+model, examining the adjusted $R^2$ value to determine goodness of fit. The predictors 
+chosen were `carat`, `depth`, `color`, and `clarity`. The transformed model had a better 
+fit than the model with the same predictors but without the transformation. Then, this 
+model was compared to a model chosen using stepwise AIC on the previous model. The stepwise
+method eliminated the `depth` variable previously chosen, which kept adjusted $R^2$ the 
+same but got rid of a statistically insignificant predictor. Multicollinearity was 
+checked with variance inflation factors, appearing unconcerning, and finally leverage 
+points and influential points were checked. Overall, the report helped to familiarize 
+oneself with exploratory data analysis, feature engineering, and overfitting.
+
+
+
