@@ -1,5 +1,5 @@
 ---
-title: "Final Project 126"
+title: "Regression Analysis of Diamond Prices"
 author: "Lucas Childs"
 date: "2025-03-17"
 output: pdf_document
