@@ -10,6 +10,6 @@ This report sought to fit a linear regression model in R for diamond price, choo
 * Analyzing multicollinearity with VIF (Variance Inflation Factor)
 * Examining leverage and influential points using Cook's distance 
 
-Additionally, EDA was run, and R outputs were thoroughly interpretted like the linear regression `summary()` function output for instance. The data was taken from the “Diamonds Prices” dataset on Kaggle, randomly sampling 1000 observations. 
+Additionally, EDA was run, and R outputs were thoroughly interpretted like the linear regression `summary()` function output for instance. The data was taken from the “[Diamonds Prices](https://www.kaggle.com/datasets/nancyalaswad90/diamonds-prices)” dataset on Kaggle, randomly sampling 1000 observations. 
 
 
